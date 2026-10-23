@@ -157,6 +157,10 @@
     #remainingBubblesVal {
       font-variant-numeric: tabular-nums;
     }
+    /* 题号两位数时保持单行，避免战绩条换行 */
+    #questionProgressText {
+      white-space: nowrap;
+    }
     #prevQuestionBtn,
     #nextQuestionBtn {
       height: 24px;
@@ -416,7 +420,7 @@
       <!-- 实时课堂数据与题目快切 -->
       <div class="flex items-center justify-between gap-1 flex-wrap text-[11px]">
         <div class="flex items-center gap-1.5 sm:gap-2">
-          <div class="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 flex items-center gap-1">
+          <div id="scoreChip" role="button" tabindex="0" title="查看成绩排行榜" class="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 flex items-center gap-1 cursor-pointer hover:bg-amber-500/25 transition">
             <span>🏆 总分</span>
             <strong id="scoreVal" class="text-amber-400 font-black text-xs">0</strong>
           </div>
@@ -645,6 +649,9 @@
             <p class="text-[11px] text-slate-400">点击下方任意课时工位，可直接进入对应AI教练的泡泡龙实训关卡</p>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
+            <button id="courseLeaderboardBtn" class="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-extrabold transition hover:bg-amber-500/30">
+              🏅 成绩榜
+            </button>
             <button id="toggleAddQuestionBtn" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow transition">
               ➕ 老师加题
             </button>
@@ -772,9 +779,49 @@
           <div id="roundFinalBest" class="text-base font-extrabold text-sky-400">0</div>
         </div>
       </div>
+      <div class="flex items-center gap-2 mb-2">
+        <input id="leaderboardNameInput" maxlength="12" aria-label="姓名或学号" placeholder="姓名 / 学号（可留空）"
+          class="flex-1 min-w-0 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-400" />
+        <button id="saveScoreBtn" class="px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 font-extrabold text-xs shrink-0 hover:bg-amber-500/30 transition">
+          保存并上榜
+        </button>
+      </div>
       <button id="roundNextOrRetryBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-extrabold text-sm shadow-lg">
         🚀 开启下一轮实训
       </button>
+    </div>
+  </div>
+
+  <!-- 成绩排行榜弹窗 -->
+  <div id="leaderboardModal" class="fixed inset-0 z-[60] hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-900 rounded-3xl p-4 border border-sky-400/35 shadow-2xl flex flex-col max-h-[82vh]">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="text-sm font-extrabold text-white">实训成绩排行榜</h3>
+        <button id="closeLeaderboardBtn" aria-label="关闭排行榜" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+      <p class="text-[10px] text-slate-400 mb-2">按总分排序，成绩保存在本机浏览器</p>
+
+      <div id="leaderboardList" class="flex-1 overflow-y-auto custom-scroll flex flex-col gap-1.5 pr-1 min-h-[80px]"></div>
+
+      <div class="flex items-center justify-between gap-2 mt-3">
+        <button id="clearLeaderboardBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold transition hover:bg-slate-700">
+          清空排行榜
+        </button>
+        <button id="leaderboardCloseFooterBtn" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-[11px] font-extrabold shadow">
+          关闭
+        </button>
+      </div>
+
+      <!-- 清空二次确认（页内弹窗，不使用系统 confirm） -->
+      <div id="clearLeaderboardConfirm" class="hidden mt-2 px-2.5 py-2 rounded-xl bg-rose-950/60 border border-rose-500/40 text-[11px] text-rose-200 leading-relaxed">
+        确认清空全部排行榜记录？清空后无法恢复。
+        <div class="flex justify-end gap-2 mt-1.5">
+          <button id="cancelClearBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-bold">取消</button>
+          <button id="confirmClearBtn" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">确认清空</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -797,8 +844,8 @@
       <p id="answerResultCase" class="text-[10px] text-rose-300 font-semibold mt-1.5 leading-snug"></p>
 
       <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-800 pt-2">
-        <span>总分 <strong id="answerResultTotal" class="text-amber-300 font-black text-xs">0</strong></span>
-        <span>命中 <strong id="answerResultAcc" class="text-emerald-300 font-black text-xs">0/0</strong></span>
+        <span>本轮 <strong id="answerResultTotal" class="text-amber-300 font-black text-xs">0</strong> 分</span>
+        <span>本轮命中 <strong id="answerResultAcc" class="text-emerald-300 font-black text-xs">0/0</strong></span>
       </div>
 
       <button id="answerNextBtn" class="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-extrabold text-sm shadow-lg">
@@ -1450,7 +1497,10 @@
       lastShotCorrect: null,
       directFireOnOptTap: false,
       answerLocked: false, // 本题已作答，等待弹窗确认后再进入下一题
-      pendingRound: false, // 本轮靶标清空，关闭答题弹窗后展示结算
+      sessionAnswered: 0, // 本轮已作答题数
+      roundScore: 0, // 本轮得分
+      roundAnswered: 0, // 本轮答题数
+      roundCorrect: 0, // 本轮答对数
       autoNextTimer: null
     };
 
@@ -1688,6 +1738,8 @@
       const mod = getModuleById(q.moduleId);
       const isCorrect = (shotOpt === q.answer);
       state.totalAnswered++;
+      state.roundAnswered++;
+      state.sessionAnswered++;
       state.lastShotOptIdx = shotOpt;
       state.lastShotCorrect = isCorrect;
       state.answerLocked = true;
@@ -1696,9 +1748,11 @@
       if (isCorrect) {
         sfx.playCorrectPop();
         state.totalCorrect++;
+        state.roundCorrect++;
         state.streak++;
         delta = 100 + state.streak * 20;
         state.score += delta;
+        state.roundScore += delta;
 
         // 命中正解：清掉最近的 3 个靶标泡
         const aliveList = bubbles.filter(b => b.alive);
@@ -1710,12 +1764,12 @@
         });
 
         addPopupText(hitX, hitY, `✅ +${delta}`, '#34d399');
-        if (countAliveBubbles() === 0) state.pendingRound = true;
       } else {
         sfx.playWrongBounce();
         state.streak = 0;
-        // 答错扣 30 分，总分最低为 0，避免反复试错刷分
+        // 答错扣 30 分，总分与本轮分最低为 0，避免反复试错刷分
         state.score = Math.max(0, state.score - 30);
+        state.roundScore = Math.max(0, state.roundScore - 30);
         delta = -30;
         spawnExplosion(hitX, hitY, '#f43f5e', 12);
         addPopupText(hitX, hitY, `❌ ${delta}`, '#fb7185');
@@ -1998,7 +2052,11 @@
         state.lastShotOptIdx = null;
         state.lastShotCorrect = null;
         state.answerLocked = false;
-        state.pendingRound = false;
+        state.sessionAnswered = 0;
+        state.roundScore = 0;
+        state.roundAnswered = 0;
+        state.roundCorrect = 0;
+        state.streak = 0;
         renderModuleFilterButtons();
         renderQuestionAndOptionsUI();
       });
@@ -2024,7 +2082,11 @@
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
           state.answerLocked = false;
-          state.pendingRound = false;
+          state.sessionAnswered = 0;
+          state.roundScore = 0;
+          state.roundAnswered = 0;
+          state.roundCorrect = 0;
+          state.streak = 0;
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
         });
@@ -2206,17 +2268,16 @@
       correctEl.className = 'text-emerald-300';
       expEl.textContent = q.explanation;
       caseEl.textContent = `🌟 ${mod.ideologyTitle} · ${mod.caseStudy}`;
-      document.getElementById('answerResultTotal').textContent = state.score;
-      document.getElementById('answerResultAcc').textContent = `${state.totalCorrect}/${state.totalAnswered}`;
-      nextBtn.textContent = state.pendingRound ? '查看本轮成绩' : '下一题';
+      document.getElementById('answerResultTotal').textContent = state.roundScore;
+      document.getElementById('answerResultAcc').textContent = `${state.roundCorrect}/${state.roundAnswered}`;
+      nextBtn.textContent = (state.sessionAnswered >= list.length) ? '查看本轮成绩' : '下一题';
 
       modal.classList.remove('hidden');
     }
 
     function closeAnswerResultModal() {
       document.getElementById('answerResultModal').classList.add('hidden');
-      if (state.pendingRound) {
-        state.pendingRound = false;
+      if (state.sessionAnswered >= getFilteredQuestions().length) {
         state.answerLocked = false;
         showRoundResultModal();
       } else {
@@ -2226,23 +2287,127 @@
 
     function showRoundResultModal() {
       const modal = document.getElementById('roundResultModal');
-      const acc = state.totalAnswered === 0
-        ? '100%'
-        : `${Math.round((state.totalCorrect / state.totalAnswered) * 100)}%`;
+      const total = getFilteredQuestions().length;
+      const acc = state.roundAnswered === 0
+        ? '0%'
+        : `${Math.round((state.roundCorrect / state.roundAnswered) * 100)}%`;
       let best = 0;
       try {
         best = Number(localStorage.getItem('aigc_bubble_best_score') || 0) || 0;
-        if (state.score > best) {
-          best = state.score;
+        if (state.roundScore > best) {
+          best = state.roundScore;
           localStorage.setItem('aigc_bubble_best_score', String(best));
         }
       } catch (e) {
-        best = Math.max(best, state.score);
+        best = Math.max(best, state.roundScore);
       }
-      document.getElementById('roundFinalScore').textContent = state.score;
+      document.getElementById('roundResultTitle').textContent = '本轮实训全部完成！';
+      document.getElementById('roundResultDesc').textContent = `已完成 ${state.roundAnswered}/${total} 题，答对 ${state.roundCorrect} 题`;
+      document.getElementById('roundFinalScore').textContent = state.roundScore;
       document.getElementById('roundFinalAcc').textContent = acc;
       document.getElementById('roundFinalBest').textContent = best;
+      document.getElementById('leaderboardNameInput').value = '';
       modal.classList.remove('hidden');
+    }
+
+    // 重置本轮进度（不重置累计总分）
+    function resetRoundProgress() {
+      state.sessionAnswered = 0;
+      state.roundScore = 0;
+      state.roundAnswered = 0;
+      state.roundCorrect = 0;
+      state.streak = 0;
+      state.answerLocked = false;
+      state.lastShotOptIdx = null;
+      state.lastShotCorrect = null;
+    }
+
+    /********************************************************************
+     * 成绩排行榜（保存在本机浏览器）
+     ********************************************************************/
+    const LEADERBOARD_KEY = 'aigc_bubble_quiz_leaderboard_v1';
+
+    function loadLeaderboard() {
+      try {
+        const list = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function persistLeaderboard(list) {
+      try {
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(list.slice(0, 30)));
+      } catch (e) {
+        // 隐私模式下写入失败时，仅保留当前页面内数据
+      }
+    }
+
+    function sortLeaderboard(list) {
+      return list.sort((a, b) =>
+        (b.score - a.score) || (b.accuracy - a.accuracy) || (a.time - b.time)
+      );
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    function renderLeaderboard(highlightId) {
+      const list = sortLeaderboard(loadLeaderboard());
+      const box = document.getElementById('leaderboardList');
+      if (!list.length) {
+        box.innerHTML = '<div class="py-8 text-center text-[11px] text-slate-500 leading-relaxed">暂无成绩记录<br>完成一轮实训后可保存成绩</div>';
+        return;
+      }
+      const medal = ['🥇', '🥈', '🥉'];
+      box.innerHTML = list.map((it, i) => {
+        const isNew = it.id === highlightId;
+        return `
+          <div class="flex items-center gap-2 px-2.5 py-2 rounded-xl border ${isNew ? 'border-amber-400/60 bg-amber-500/10' : 'border-slate-800 bg-slate-950/70'}">
+            <span class="w-6 text-center text-xs font-black ${i < 3 ? 'text-amber-300' : 'text-slate-500'}">${i < 3 ? medal[i] : i + 1}</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[11px] font-extrabold text-white truncate">${escapeHtml(it.name)}</div>
+              <div class="text-[9px] text-slate-400">命中 ${it.correct}/${it.answered} · ${it.accuracy}% · ${escapeHtml(it.timeText || '')}</div>
+            </div>
+            <span class="text-sm font-black text-amber-300 shrink-0">${it.score}</span>
+          </div>`;
+      }).join('');
+    }
+
+    function showLeaderboard(highlightId) {
+      renderLeaderboard(highlightId);
+      document.getElementById('clearLeaderboardConfirm').classList.add('hidden');
+      document.getElementById('leaderboardModal').classList.remove('hidden');
+    }
+
+    function closeLeaderboard() {
+      document.getElementById('leaderboardModal').classList.add('hidden');
+    }
+
+    function saveRoundScore() {
+      const input = document.getElementById('leaderboardNameInput');
+      const name = (input.value || '').trim().slice(0, 12) || '匿名学员';
+      const accuracy = state.roundAnswered === 0
+        ? 0
+        : Math.round((state.roundCorrect / state.roundAnswered) * 100);
+      const entry = {
+        id: Date.now(),
+        name,
+        score: state.roundScore,
+        correct: state.roundCorrect,
+        answered: state.roundAnswered,
+        accuracy,
+        time: Date.now(),
+        timeText: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+      };
+      const list = loadLeaderboard();
+      list.push(entry);
+      persistLeaderboard(sortLeaderboard(list));
+      input.value = '';
+      document.getElementById('roundResultModal').classList.add('hidden');
+      showLeaderboard(entry.id);
     }
 
     function goToNextQuestion(autoRefillIfLow = true) {
@@ -2338,7 +2503,11 @@
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
           state.answerLocked = false;
-          state.pendingRound = false;
+          state.sessionAnswered = 0;
+          state.roundScore = 0;
+          state.roundAnswered = 0;
+          state.roundCorrect = 0;
+          state.streak = 0;
           switchView('game');
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
@@ -2422,7 +2591,11 @@
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
           state.answerLocked = false;
-          state.pendingRound = false;
+          state.sessionAnswered = 0;
+          state.roundScore = 0;
+          state.roundAnswered = 0;
+          state.roundCorrect = 0;
+          state.streak = 0;
           switchView('game');
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
@@ -2644,10 +2817,40 @@
 
       document.getElementById('answerNextBtn').addEventListener('click', closeAnswerResultModal);
 
+      // 成绩排行榜入口与操作
+      document.getElementById('scoreChip').addEventListener('click', () => showLeaderboard());
+      document.getElementById('scoreChip').addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          showLeaderboard();
+        }
+      });
+      document.getElementById('courseLeaderboardBtn').addEventListener('click', () => showLeaderboard());
+      document.getElementById('saveScoreBtn').addEventListener('click', saveRoundScore);
+      document.getElementById('closeLeaderboardBtn').addEventListener('click', closeLeaderboard);
+      document.getElementById('leaderboardCloseFooterBtn').addEventListener('click', closeLeaderboard);
+      document.getElementById('clearLeaderboardBtn').addEventListener('click', () => {
+        document.getElementById('clearLeaderboardConfirm').classList.remove('hidden');
+      });
+      document.getElementById('cancelClearBtn').addEventListener('click', () => {
+        document.getElementById('clearLeaderboardConfirm').classList.add('hidden');
+      });
+      document.getElementById('confirmClearBtn').addEventListener('click', () => {
+        try {
+          localStorage.removeItem(LEADERBOARD_KEY);
+        } catch (e) {
+          // 隐私模式下忽略
+        }
+        document.getElementById('clearLeaderboardConfirm').classList.add('hidden');
+        renderLeaderboard();
+      });
+
       document.getElementById('roundNextOrRetryBtn').addEventListener('click', () => {
         document.getElementById('roundResultModal').classList.add('hidden');
+        resetRoundProgress();
+        state.qIndex = 0;
         initBubbleWall();
-        goToNextQuestion(false);
+        renderQuestionAndOptionsUI();
       });
 
       const addForm = document.getElementById('addQuestionFormBox');
