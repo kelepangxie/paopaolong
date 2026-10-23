@@ -417,7 +417,7 @@
       <div class="flex items-center justify-between gap-1 flex-wrap text-[11px]">
         <div class="flex items-center gap-1.5 sm:gap-2">
           <div class="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 flex items-center gap-1">
-            <span>🏆 积分</span>
+            <span>🏆 总分</span>
             <strong id="scoreVal" class="text-amber-400 font-black text-xs">0</strong>
           </div>
           <div class="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 flex items-center gap-1">
@@ -758,18 +758,51 @@
       <div id="roundResultEmoji" class="text-5xl mb-2">🏆</div>
       <h3 id="roundResultTitle" class="text-lg font-extrabold text-white mb-1">本轮提案靶标全部清空！</h3>
       <p id="roundResultDesc" class="text-xs text-slate-300 mb-4">你已出色完成《模拟真实广告公司全流程》实训挑战！</p>
-      <div class="grid grid-cols-2 gap-2 mb-5 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+      <div class="grid grid-cols-3 gap-2 mb-5 bg-slate-950 p-3 rounded-2xl border border-slate-800">
         <div>
-          <div class="text-[11px] text-slate-400">当前实训总分</div>
-          <div id="roundFinalScore" class="text-lg font-extrabold text-amber-400">0</div>
+          <div class="text-[10px] text-slate-400">本轮总分</div>
+          <div id="roundFinalScore" class="text-base font-extrabold text-amber-400">0</div>
         </div>
         <div>
-          <div class="text-[11px] text-slate-400">提案命中率</div>
-          <div id="roundFinalAcc" class="text-lg font-extrabold text-emerald-400">100%</div>
+          <div class="text-[10px] text-slate-400">命中率</div>
+          <div id="roundFinalAcc" class="text-base font-extrabold text-emerald-400">100%</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400">历史最佳</div>
+          <div id="roundFinalBest" class="text-base font-extrabold text-sky-400">0</div>
         </div>
       </div>
       <button id="roundNextOrRetryBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-extrabold text-sm shadow-lg">
         🚀 开启下一轮实训
+      </button>
+    </div>
+  </div>
+
+  <!-- 单题答题结果弹窗 -->
+  <div id="answerResultModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="answerResultCard" class="w-full max-w-sm bg-slate-900 rounded-3xl p-4 sm:p-5 border border-emerald-400/45 shadow-2xl">
+      <div class="flex items-center gap-2.5 mb-2.5">
+        <span id="answerResultBadge" class="w-9 h-9 rounded-full flex items-center justify-center font-black text-base bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shrink-0">✓</span>
+        <div class="min-w-0 flex-1">
+          <h3 id="answerResultTitle" class="text-sm font-extrabold text-emerald-300 leading-tight">回答正确</h3>
+          <p id="answerResultSub" class="text-[10px] text-slate-400 truncate">第 1/24 题</p>
+        </div>
+        <span id="answerResultDelta" class="text-base font-black text-emerald-400 shrink-0">+120</span>
+      </div>
+
+      <div class="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-300 mb-2 leading-snug">
+        正确答案：<strong id="answerResultCorrect" class="text-emerald-300">A · 选项内容</strong>
+      </div>
+      <p id="answerResultExplanation" class="text-[11px] text-slate-200 leading-relaxed"></p>
+      <p id="answerResultCase" class="text-[10px] text-rose-300 font-semibold mt-1.5 leading-snug"></p>
+
+      <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-800 pt-2">
+        <span>总分 <strong id="answerResultTotal" class="text-amber-300 font-black text-xs">0</strong></span>
+        <span>命中 <strong id="answerResultAcc" class="text-emerald-300 font-black text-xs">0/0</strong></span>
+      </div>
+
+      <button id="answerNextBtn" class="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-extrabold text-sm shadow-lg">
+        下一题
       </button>
     </div>
   </div>
@@ -1416,6 +1449,8 @@
       lastShotOptIdx: null,
       lastShotCorrect: null,
       directFireOnOptTap: false,
+      answerLocked: false, // 本题已作答，等待弹窗确认后再进入下一题
+      pendingRound: false, // 本轮靶标清空，关闭答题弹窗后展示结算
       autoNextTimer: null
     };
 
@@ -1586,7 +1621,8 @@
     }
 
     function shootAnswerOption(optIdx = state.loadedOptIdx, specificBubble = null) {
-      if (projectile) return;
+      // 本题已判分后锁住发射，必须通过结果弹窗进入下一题
+      if (projectile || state.answerLocked) return;
 
       if (state.autoNextTimer) {
         clearAutoNextTimer();
@@ -1646,6 +1682,7 @@
       const hitX = projectile.targetX;
       const hitY = projectile.targetY;
       projectile = null;
+      if (state.answerLocked) return;
 
       const q = getCurrentQuestion();
       const mod = getModuleById(q.moduleId);
@@ -1653,14 +1690,17 @@
       state.totalAnswered++;
       state.lastShotOptIdx = shotOpt;
       state.lastShotCorrect = isCorrect;
+      state.answerLocked = true;
 
+      let delta = 0;
       if (isCorrect) {
         sfx.playCorrectPop();
         state.totalCorrect++;
         state.streak++;
-        const earned = 100 + state.streak * 20;
-        state.score += earned;
+        delta = 100 + state.streak * 20;
+        state.score += delta;
 
+        // 命中正解：清掉最近的 3 个靶标泡
         const aliveList = bubbles.filter(b => b.alive);
         aliveList.sort((a, b) => Math.hypot(a.x - hitX, a.y - hitY) - Math.hypot(b.x - hitX, b.y - hitY));
         const toPop = aliveList.slice(0, Math.min(3, aliveList.length));
@@ -1669,44 +1709,21 @@
           spawnExplosion(b.x, b.y, OPTION_STYLES[b.optIdx].main, 18);
         });
 
-        addPopupText(hitX, hitY, `✅ 提案通过! +${earned}`, '#34d399');
-        showToast(`🎉 ${mod.role}点赞：${OPTION_STYLES[shotOpt].letter} 项正确！即将连闯下一题`);
-
-        renderQuestionAndOptionsUI();
-        updateScoreAndStatsUI();
-
-        if (countAliveBubbles() === 0) {
-          clearAutoNextTimer();
-          setTimeout(() => {
-            const modal = document.getElementById('roundResultModal');
-            const acc = state.totalAnswered === 0
-              ? '100%'
-              : `${Math.round((state.totalCorrect / state.totalAnswered) * 100)}%`;
-            document.getElementById('roundFinalScore').textContent = state.score;
-            document.getElementById('roundFinalAcc').textContent = acc;
-            modal.classList.remove('hidden');
-          }, 550);
-          return;
-        }
-
-        clearAutoNextTimer();
-        const badge = document.getElementById('autoNextHintBadge');
-        if (badge) badge.classList.remove('hidden');
-        state.autoNextTimer = setTimeout(() => {
-          state.autoNextTimer = null;
-          if (badge) badge.classList.add('hidden');
-          goToNextQuestion(true);
-        }, 1300);
+        addPopupText(hitX, hitY, `✅ +${delta}`, '#34d399');
+        if (countAliveBubbles() === 0) state.pendingRound = true;
       } else {
         sfx.playWrongBounce();
         state.streak = 0;
+        // 答错扣 30 分，总分最低为 0，避免反复试错刷分
+        state.score = Math.max(0, state.score - 30);
+        delta = -30;
         spawnExplosion(hitX, hitY, '#f43f5e', 12);
-        addPopupText(hitX, hitY, `❌ ${OPTION_STYLES[shotOpt].letter}项有误，换弹再射!`, '#fb7185');
-        showToast(`💡 ${mod.role}提示：${OPTION_STYLES[shotOpt].letter}项不对，拇指切弹再射一次！`);
-
-        renderQuestionAndOptionsUI();
-        updateScoreAndStatsUI();
+        addPopupText(hitX, hitY, `❌ ${delta}`, '#fb7185');
       }
+
+      renderQuestionAndOptionsUI();
+      updateScoreAndStatsUI();
+      showAnswerResultModal(isCorrect, delta, q, mod);
     }
 
     function updateGameLoop() {
@@ -1980,6 +1997,8 @@
         state.qIndex = 0;
         state.lastShotOptIdx = null;
         state.lastShotCorrect = null;
+        state.answerLocked = false;
+        state.pendingRound = false;
         renderModuleFilterButtons();
         renderQuestionAndOptionsUI();
       });
@@ -2004,6 +2023,8 @@
           state.qIndex = 0;
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
+          state.answerLocked = false;
+          state.pendingRound = false;
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
         });
@@ -2135,34 +2156,13 @@
         grid.appendChild(btn);
       });
 
-      const fbBox = document.getElementById('inlineFeedbackBox');
-      const fbTitle = document.getElementById('inlineFeedbackTitle');
-      const fbExp = document.getElementById('inlineExplanationText');
-      const fbCase = document.getElementById('inlineCaseTipText');
-
-      if (state.lastShotOptIdx !== null) {
-        fbBox.classList.remove('hidden');
-        if (state.lastShotCorrect) {
-          fbBox.className = 'mt-2 px-3 py-2 rounded-xl border border-emerald-500/50 bg-emerald-950/60 text-[11px] flex items-center justify-between gap-2';
-          fbTitle.className = 'font-extrabold text-xs text-emerald-300';
-          fbTitle.textContent = `🎉 ${mod.role}点评：命中正解 ${OPTION_STYLES[q.answer].letter}！`;
-          fbExp.textContent = q.explanation;
-          fbCase.textContent = `🌟 课程思政映射：【${mod.ideologyTitle}（${mod.ideologyValues}）】— ${mod.caseStudy}`;
-        } else {
-          fbBox.className = 'mt-2 px-3 py-2 rounded-xl border border-rose-500/50 bg-rose-950/60 text-[11px] flex items-center justify-between gap-2';
-          fbTitle.className = 'font-extrabold text-xs text-rose-300';
-          fbTitle.textContent = `💡 ${mod.role}提醒：${OPTION_STYLES[state.lastShotOptIdx].letter} 项有偏差，请在发射区切弹重射！`;
-          fbExp.textContent = `提示：结合课时${mod.id}【${q.kp}】的核心要求再思考一下。`;
-          fbCase.textContent = `📌 关联实训：${mod.taskTitle}`;
-        }
-      } else {
-        fbBox.classList.add('hidden');
-      }
+      // 答题结果统一由结果弹窗呈现，内联反馈栏保持隐藏
+      document.getElementById('inlineFeedbackBox').classList.add('hidden');
 
       syncThumbAndOptionsUI();
 
-      // 题干与选项长度会改变任务卡高度，无反馈面板时重新适配画布
-      if (state.lastShotOptIdx === null) fitMobileCanvas();
+      // 题干与选项长度会影响任务卡高度，重新适配画布
+      fitMobileCanvas();
     }
 
     function updateScoreAndStatsUI() {
@@ -2172,12 +2172,86 @@
       document.getElementById('remainingBubblesVal').textContent = countAliveBubbles();
     }
 
+    // 单题答题结果弹窗：正确显示加分，错误显示扣分与正确答案
+    function showAnswerResultModal(isCorrect, delta, q, mod) {
+      const modal = document.getElementById('answerResultModal');
+      const card = document.getElementById('answerResultCard');
+      const badge = document.getElementById('answerResultBadge');
+      const title = document.getElementById('answerResultTitle');
+      const sub = document.getElementById('answerResultSub');
+      const deltaEl = document.getElementById('answerResultDelta');
+      const correctEl = document.getElementById('answerResultCorrect');
+      const expEl = document.getElementById('answerResultExplanation');
+      const caseEl = document.getElementById('answerResultCase');
+      const nextBtn = document.getElementById('answerNextBtn');
+      const list = getFilteredQuestions();
+
+      card.className = isCorrect
+        ? 'w-full max-w-sm bg-slate-900 rounded-3xl p-4 sm:p-5 border border-emerald-400/45 shadow-2xl'
+        : 'w-full max-w-sm bg-slate-900 rounded-3xl p-4 sm:p-5 border border-rose-400/45 shadow-2xl';
+      badge.className = isCorrect
+        ? 'w-9 h-9 rounded-full flex items-center justify-center font-black text-base bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shrink-0'
+        : 'w-9 h-9 rounded-full flex items-center justify-center font-black text-base bg-rose-500/20 text-rose-300 border border-rose-400/50 shrink-0';
+      badge.textContent = isCorrect ? '✓' : '!';
+      title.textContent = isCorrect ? '回答正确' : '回答错误';
+      title.className = isCorrect
+        ? 'text-sm font-extrabold text-emerald-300 leading-tight'
+        : 'text-sm font-extrabold text-rose-300 leading-tight';
+      sub.textContent = `第 ${state.qIndex + 1}/${list.length} 题 · ${mod.role}`;
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + delta;
+      deltaEl.className = isCorrect
+        ? 'text-base font-black text-emerald-400 shrink-0'
+        : 'text-base font-black text-rose-400 shrink-0';
+      correctEl.textContent = `${OPTION_STYLES[q.answer].letter} · ${q.options[q.answer].replace(/^[A-D]\.\s*/, '')}`;
+      correctEl.className = 'text-emerald-300';
+      expEl.textContent = q.explanation;
+      caseEl.textContent = `🌟 ${mod.ideologyTitle} · ${mod.caseStudy}`;
+      document.getElementById('answerResultTotal').textContent = state.score;
+      document.getElementById('answerResultAcc').textContent = `${state.totalCorrect}/${state.totalAnswered}`;
+      nextBtn.textContent = state.pendingRound ? '查看本轮成绩' : '下一题';
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeAnswerResultModal() {
+      document.getElementById('answerResultModal').classList.add('hidden');
+      if (state.pendingRound) {
+        state.pendingRound = false;
+        state.answerLocked = false;
+        showRoundResultModal();
+      } else {
+        goToNextQuestion(true);
+      }
+    }
+
+    function showRoundResultModal() {
+      const modal = document.getElementById('roundResultModal');
+      const acc = state.totalAnswered === 0
+        ? '100%'
+        : `${Math.round((state.totalCorrect / state.totalAnswered) * 100)}%`;
+      let best = 0;
+      try {
+        best = Number(localStorage.getItem('aigc_bubble_best_score') || 0) || 0;
+        if (state.score > best) {
+          best = state.score;
+          localStorage.setItem('aigc_bubble_best_score', String(best));
+        }
+      } catch (e) {
+        best = Math.max(best, state.score);
+      }
+      document.getElementById('roundFinalScore').textContent = state.score;
+      document.getElementById('roundFinalAcc').textContent = acc;
+      document.getElementById('roundFinalBest').textContent = best;
+      modal.classList.remove('hidden');
+    }
+
     function goToNextQuestion(autoRefillIfLow = true) {
       clearAutoNextTimer();
       const list = getFilteredQuestions();
       state.qIndex = (state.qIndex + 1) % list.length;
       state.lastShotOptIdx = null;
       state.lastShotCorrect = null;
+      state.answerLocked = false;
 
       if (autoRefillIfLow && countAliveBubbles() < 6) {
         initBubbleWall();
@@ -2194,6 +2268,7 @@
       state.qIndex = (state.qIndex - 1 + list.length) % list.length;
       state.lastShotOptIdx = null;
       state.lastShotCorrect = null;
+      state.answerLocked = false;
       autoAimForLoadedOption(state.loadedOptIdx);
       renderQuestionAndOptionsUI();
     }
@@ -2262,6 +2337,8 @@
           state.qIndex = 0;
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
+          state.answerLocked = false;
+          state.pendingRound = false;
           switchView('game');
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
@@ -2344,6 +2421,8 @@
           state.qIndex = QUESTION_BANK.findIndex(item => item.id === q.id);
           state.lastShotOptIdx = null;
           state.lastShotCorrect = null;
+          state.answerLocked = false;
+          state.pendingRound = false;
           switchView('game');
           renderModuleFilterButtons();
           renderQuestionAndOptionsUI();
@@ -2562,6 +2641,8 @@
         document.getElementById('soundOnIcon').classList.toggle('hidden', sfx.muted);
         document.getElementById('soundOffIcon').classList.toggle('hidden', !sfx.muted);
       });
+
+      document.getElementById('answerNextBtn').addEventListener('click', closeAnswerResultModal);
 
       document.getElementById('roundNextOrRetryBtn').addEventListener('click', () => {
         document.getElementById('roundResultModal').classList.add('hidden');
