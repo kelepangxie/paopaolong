@@ -73,6 +73,161 @@
       animation: pulse-Subtle 2.4s infinite ease-in-out;
     }
 
+    /* ==================== 视觉精修：统一描边、圆角与控件质感 ==================== */
+    :root {
+      --ui-stroke: rgba(148, 163, 184, 0.16);
+      --ui-stroke-strong: rgba(148, 163, 184, 0.32);
+    }
+    main .glass-card {
+      border-color: var(--ui-stroke);
+      box-shadow: 0 16px 36px -24px rgba(2, 6, 23, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+    }
+    #viewGame .coach-task-card {
+      border-color: rgba(56, 189, 248, 0.22);
+    }
+    /* 课程标签统一为药丸形，字号与字距统一 */
+    #currentRoleBadge,
+    #currentDiffBadge,
+    #currentKpBadge,
+    #currentIdeologyBadge {
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.01em;
+    }
+    #canvasContainer {
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+    /* 课时工位胶囊与炮膛预览条统一圆角节奏 */
+    #moduleSelectorGrid > button {
+      height: 28px;
+      border-radius: 999px;
+    }
+    #thumbLoadedPreviewBar {
+      border-radius: 12px;
+      border-color: rgba(148, 163, 184, 0.16);
+    }
+    #thumbLoadedBadge {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+    /* 顶部导航按钮统一高度、圆角与图标尺寸 */
+    #tabGameBtn,
+    #tabCourseBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 10px;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      border-radius: 10px;
+    }
+    #soundToggleBtn {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #tabGameBtn svg,
+    #tabCourseBtn svg,
+    #soundToggleBtn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+    /* 战绩胶囊统一为等高药丸，数字等宽对齐 */
+    main > div:first-child > div:first-child > div:first-child > div {
+      height: 24px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+    }
+    #scoreVal,
+    #accuracyVal,
+    #streakVal,
+    #questionProgressText,
+    #remainingBubblesVal {
+      font-variant-numeric: tabular-nums;
+    }
+    #prevQuestionBtn,
+    #nextQuestionBtn {
+      height: 24px;
+      min-width: 24px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 题目框与选项卡片 */
+    #questionBox {
+      border-radius: 12px;
+      background: rgba(2, 6, 23, 0.6);
+    }
+    #mainOptionsGrid > button {
+      min-height: 44px;
+      border-radius: 12px;
+      border-width: 1px;
+      transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
+    }
+    /* 拇指操控舱控件统一尺寸与按压反馈 */
+    #viewGame .thumb-btn {
+      min-height: 50px;
+      border-radius: 12px;
+    }
+    #thumbFireBtn {
+      box-shadow: 0 10px 22px -10px rgba(14, 165, 233, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    }
+    #viewGame .thumb-btn:active {
+      transform: scale(0.96);
+    }
+    /* 直接发射开关：胶囊式拨动开关 */
+    #directFireToggle {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 28px;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(51, 65, 85, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      position: relative;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
+    }
+    #directFireToggle::after {
+      content: '';
+      position: absolute;
+      top: 1.5px;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: transform 0.18s ease, background-color 0.18s ease;
+    }
+    #directFireToggle:checked {
+      background: rgba(14, 165, 233, 0.9);
+      border-color: rgba(125, 211, 252, 0.7);
+    }
+    #directFireToggle:checked::after {
+      transform: translateX(12px);
+      background: #ffffff;
+    }
+    /* 统一键盘焦点样式 */
+    button:focus-visible,
+    label:focus-visible,
+    input:focus-visible {
+      outline: 2px solid rgba(56, 189, 248, 0.6);
+      outline-offset: 2px;
+    }
+    /* 移动端使用短标签，桌面端保留完整文案 */
+    .tab-text-short {
+      display: none;
+    }
+
     /* ==================== 移动端竖屏布局优化 ==================== */
     @media (max-width: 640px) {
       /* 顶部导航取消吸顶并压缩高度，滚动时不再遮挡画布与操控舱 */
@@ -84,6 +239,18 @@
       /* 题干切换按钮只保留箭头，避免战绩条换行挤占高度 */
       .btn-label {
         display: none;
+      }
+      /* 导航使用短标签，给课程标题留出空间 */
+      .tab-text-full {
+        display: none;
+      }
+      .tab-text-short {
+        display: inline;
+      }
+      /* 课时胶囊右侧渐隐，提示可横向滑动 */
+      #moduleSelectorGrid {
+        -webkit-mask-image: linear-gradient(to right, #000 94%, transparent 100%);
+        mask-image: linear-gradient(to right, #000 94%, transparent 100%);
       }
       main > div:first-child > div:first-child {
         gap: 0.15rem;
@@ -109,9 +276,9 @@
         gap: 0.3rem;
       }
 
-      /* 画布舞台去掉多余内边距，尽量贴近屏幕左右边缘 */
+      /* 画布舞台只留纵向内边距，画布与操控舱横向铺满 */
       #viewGame .canvas-stage-card {
-        padding: 0.25rem;
+        padding: 0.25rem 0;
       }
 
       /* 压缩课程任务卡，为操作区让出首屏高度 */
@@ -121,6 +288,10 @@
       .coach-task-card #currentCoachAvatar {
         width: 2.25rem;
         height: 2.25rem;
+      }
+      /* 任务标题限宽，难度标签与角色同行显示 */
+      #currentTaskBadge {
+        max-width: 128px;
       }
       .coach-task-card > div:nth-child(2) {
         margin-bottom: 0.3rem;
@@ -144,18 +315,19 @@
       }
       #mainOptionsGrid > button {
         padding: 0.3rem 0.35rem;
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      #mainOptionsGrid [data-opt-status] {
+        font-size: 8px;
+        padding: 1px 4px;
       }
       #mainOptionsGrid > button > div > span:last-child {
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
-      /* 触屏手势长文案收起，直接发射开关已移入炮膛预览条 */
-      #viewGame .gesture-hint {
-        display: none;
-      }
-
       /* 画布尺寸由脚本按剩余视口高度计算，确保与操控舱同屏 */
       #canvasContainer {
         max-width: 100%;
@@ -194,19 +366,38 @@
               思政融创版
             </span>
           </div>
-          <p class="text-[10px] text-slate-400 truncate">6大广告工位AI教练带教 · 发射区单手切弹瞄准即射</p>
+          <p class="text-[10px] text-slate-400 truncate">6大工位AI带教 · 单手切弹即射</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
         <button id="tabGameBtn" class="px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25 border border-sky-300/30 transition">
-          🎮 实训闯关
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="6.5" width="19" height="11" rx="5.5"></rect>
+            <path d="M6.8 12h3.4M8.5 10.3v3.4"></path>
+            <path d="M15.6 11.2h.01M17.8 13.2h.01" stroke-width="2.4"></path>
+          </svg>
+          <span class="tab-text-full">实训闯关</span>
+          <span class="tab-text-short">闯关</span>
         </button>
         <button id="tabCourseBtn" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition">
-          🗺️ 课程图谱&amp;题库
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 4 3.5 6.2v13.3L9 17.3l6 2.2 5.5-2.2V4L15 6.2 9 4Z"></path>
+            <path d="M9 4v13.3M15 6.2v13.3"></path>
+          </svg>
+          <span class="tab-text-full">课程图谱&amp;题库</span>
+          <span class="tab-text-short">图谱</span>
         </button>
-        <button id="soundToggleBtn" title="音效开关" class="w-7 h-7 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 text-xs flex items-center justify-center transition">
-          🔊
+        <button id="soundToggleBtn" title="音效开关" aria-label="音效开关" class="w-7 h-7 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 text-xs flex items-center justify-center transition">
+          <svg id="soundOnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5 6.5 9H4v6h2.5L11 19V5Z"></path>
+            <path d="M15.5 9.2a4 4 0 0 1 0 5.6"></path>
+            <path d="M18 6.8a7.5 7.5 0 0 1 0 10.4"></path>
+          </svg>
+          <svg id="soundOffIcon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5 6.5 9H4v6h2.5L11 19V5Z"></path>
+            <path d="m16 10 5 4M21 10l-5 4"></path>
+          </svg>
         </button>
       </div>
     </div>
@@ -317,8 +508,12 @@
             <p id="inlineExplanationText" class="text-slate-200 leading-snug mt-0.5"></p>
             <div id="inlineCaseTipText" class="text-[10px] text-rose-300 font-semibold mt-1"></div>
           </div>
-          <button id="nextAfterShotBtn" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-[11px] shadow-md shrink-0">
-            下一题 🚀
+          <button id="nextAfterShotBtn" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-[11px] shadow-md shrink-0">
+            下一题
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px">
+              <path d="M5 12h13"></path>
+              <path d="m12.5 6 6 6-6 6"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -331,17 +526,17 @@
           <canvas id="bubbleCanvas" class="w-full h-full"></canvas>
 
           <!-- 画布顶部课程实战案例与靶标状态栏 -->
-          <div class="absolute top-2 left-2.5 right-2.5 flex items-center justify-between pointer-events-none text-[10px] sm:text-[11px]">
-            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-sky-500/30 text-sky-200 shadow">
-              <span>🎨 实战背景:</span>
-              <strong id="canvasCaseLabel" class="text-amber-300 font-bold truncate max-w-[165px] sm:max-w-[220px]">《美丽南方研学》AI生图案例</strong>
+          <div class="absolute top-2 left-2.5 right-2.5 flex items-center justify-between gap-1.5 pointer-events-none text-[10px] sm:text-[11px]">
+            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-500/25 text-sky-200 shadow min-w-0">
+              <span class="whitespace-nowrap shrink-0">🎨 背景</span>
+              <strong id="canvasCaseLabel" class="text-amber-300 font-bold truncate max-w-[104px] sm:max-w-[200px]">《美丽南方研学》AI生图案例</strong>
             </div>
-            <div class="flex items-center gap-1.5">
-              <span class="px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-700 text-slate-300">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="whitespace-nowrap px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-700/70 text-slate-300">
                 靶标泡 <strong id="remainingBubblesVal" class="text-sky-400">24</strong>
               </span>
-              <button id="restartGameBtn" class="pointer-events-auto px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-sky-300 border border-sky-500/30 text-[10px] font-semibold transition">
-                🔄 重置靶盘
+              <button id="restartGameBtn" class="whitespace-nowrap pointer-events-auto px-2 py-0.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-sky-300 border border-slate-500/25 text-[10px] font-semibold transition">
+                🔄 重置
               </button>
             </div>
           </div>
@@ -362,7 +557,7 @@
                 A
               </span>
               <div class="min-w-0 flex-1">
-                <div class="text-[10px] text-sky-400 font-bold leading-none mb-0.5">当前炮膛已装填选项（发射后自动校核知识点）：</div>
+                <div class="text-[10px] text-sky-400 font-bold leading-none mb-0.5 whitespace-nowrap">当前装填 · 发射后自动校核</div>
                 <div id="thumbLoadedOptionText" class="text-slate-100 font-bold truncate text-[11px] sm:text-xs">
                   当前装填 A 泡
                 </div>
@@ -378,7 +573,13 @@
           <div class="flex items-center gap-1.5">
             <!-- 拇指顺次切换炮弹按钮 -->
             <button id="cycleAmmoBtn" class="thumb-btn px-2.5 sm:px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-400/40 text-amber-300 font-extrabold text-xs flex flex-col items-center justify-center shrink-0 shadow">
-              <span>🔄 换弹</span>
+              <span class="flex items-center gap-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px">
+                  <path d="M20 12a8 8 0 1 1-2.4-5.7"></path>
+                  <path d="M20 4v4.2h-4.2"></path>
+                </svg>
+                换弹
+              </span>
               <span class="text-[9px] text-slate-300 font-medium mt-0.5">A→B→C→D</span>
             </button>
 
@@ -404,7 +605,13 @@
 
             <!-- 拇指大号发射键 -->
             <button id="thumbFireBtn" class="thumb-btn px-3 sm:px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-xs flex flex-col items-center justify-center shrink-0 shadow-lg shadow-sky-500/30 border border-sky-300/40">
-              <span>🚀 发射</span>
+              <span class="flex items-center gap-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px">
+                  <path d="M5 19 19 5"></path>
+                  <path d="M9.5 5H19v9.5"></path>
+                </svg>
+                发射
+              </span>
               <span id="thumbFireSubText" class="text-[9px] text-sky-100 font-bold mt-0.5">射出 A 泡</span>
             </button>
           </div>
@@ -1822,16 +2029,16 @@
       // 2. 底部 A / B / C / D 四个拇指按钮选中态
       const btnIds = ['quickShootA', 'quickShootB', 'quickShootC', 'quickShootD'];
       const activeStyles = [
-        'bg-sky-500/35 border-2 border-sky-300 text-white ring-2 ring-sky-400/40 scale-[1.03]',
-        'bg-purple-500/35 border-2 border-purple-300 text-white ring-2 ring-purple-400/40 scale-[1.03]',
-        'bg-teal-500/35 border-2 border-teal-300 text-white ring-2 ring-teal-400/40 scale-[1.03]',
-        'bg-orange-500/35 border-2 border-orange-300 text-white ring-2 ring-orange-400/40 scale-[1.03]'
+        'bg-sky-500/25 border border-sky-300 text-white ring-2 ring-sky-400/35 shadow-lg shadow-sky-500/20',
+        'bg-purple-500/25 border border-purple-300 text-white ring-2 ring-purple-400/35 shadow-lg shadow-purple-500/20',
+        'bg-teal-500/25 border border-teal-300 text-white ring-2 ring-teal-400/35 shadow-lg shadow-teal-500/20',
+        'bg-orange-500/25 border border-orange-300 text-white ring-2 ring-orange-400/35 shadow-lg shadow-orange-500/20'
       ];
       const idleStyles = [
-        'bg-sky-500/10 border border-sky-500/30 text-sky-200 opacity-80',
-        'bg-purple-500/10 border border-purple-500/30 text-purple-200 opacity-80',
-        'bg-teal-500/10 border border-teal-500/30 text-teal-200 opacity-80',
-        'bg-orange-500/10 border border-orange-500/30 text-orange-200 opacity-80'
+        'bg-slate-900/60 border border-slate-700/70 text-sky-200',
+        'bg-slate-900/60 border border-slate-700/70 text-purple-200',
+        'bg-slate-900/60 border border-slate-700/70 text-teal-200',
+        'bg-slate-900/60 border border-slate-700/70 text-orange-200'
       ];
 
       btnIds.forEach((id, idx) => {
@@ -1850,25 +2057,25 @@
         const statusTag = card.querySelector('[data-opt-status]');
 
         if (state.lastShotCorrect === true && idx === q.answer) {
-          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border-2 border-emerald-400 bg-emerald-500/25 text-emerald-50 font-bold text-xs flex items-center justify-between gap-2 shadow-md';
+          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border border-emerald-400 ring-2 ring-emerald-400/30 bg-emerald-500/15 text-emerald-50 font-bold text-xs flex items-center justify-between gap-2 shadow-md';
           if (statusTag) {
             statusTag.textContent = '✅ 正解';
             statusTag.className = 'px-1.5 py-0.5 rounded bg-emerald-400 text-slate-950 font-black text-[9px] shrink-0';
           }
         } else if (state.lastShotOptIdx === idx && state.lastShotCorrect === false) {
-          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border-2 border-rose-400 bg-rose-500/25 text-rose-100 text-xs flex items-center justify-between gap-2';
+          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border border-rose-400 ring-2 ring-rose-400/25 bg-rose-500/15 text-rose-100 text-xs flex items-center justify-between gap-2';
           if (statusTag) {
             statusTag.textContent = '❌ 偏差';
             statusTag.className = 'px-1.5 py-0.5 rounded bg-rose-500 text-white font-bold text-[9px] shrink-0';
           }
         } else if (isLoaded) {
-          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border-2 border-sky-400 bg-sky-500/20 text-white font-bold text-xs flex items-center justify-between gap-2 shadow-md';
+          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border border-sky-400 ring-2 ring-sky-400/25 bg-sky-500/15 text-white font-bold text-xs flex items-center justify-between gap-2 shadow-md';
           if (statusTag) {
             statusTag.textContent = '🎯 已上膛';
             statusTag.className = 'px-1.5 py-0.5 rounded bg-sky-400/30 border border-sky-300/50 text-sky-200 font-extrabold text-[9px] shrink-0';
           }
         } else {
-          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border border-slate-800 bg-slate-950/70 hover:bg-slate-900 text-slate-300 text-xs flex items-center justify-between gap-2';
+          card.className = 'thumb-btn w-full text-left px-2.5 py-2 rounded-xl border border-slate-700/70 bg-slate-950/60 hover:bg-slate-900 text-slate-300 text-xs flex items-center justify-between gap-2';
           if (statusTag) {
             statusTag.textContent = '';
             statusTag.className = 'hidden';
@@ -2347,7 +2554,8 @@
       const soundBtn = document.getElementById('soundToggleBtn');
       soundBtn.addEventListener('click', () => {
         sfx.muted = !sfx.muted;
-        soundBtn.textContent = sfx.muted ? '🔇' : '🔊';
+        document.getElementById('soundOnIcon').classList.toggle('hidden', sfx.muted);
+        document.getElementById('soundOffIcon').classList.toggle('hidden', !sfx.muted);
       });
 
       document.getElementById('roundNextOrRetryBtn').addEventListener('click', () => {
