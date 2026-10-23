@@ -78,8 +78,8 @@
       /* 顶部导航取消吸顶并压缩高度，滚动时不再遮挡画布与操控舱 */
       body > header.sticky {
         position: static;
-        padding-top: 0.3rem;
-        padding-bottom: 0.3rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
       }
       /* 题干切换按钮只保留箭头，避免战绩条换行挤占高度 */
       .btn-label {
@@ -99,28 +99,35 @@
         font-size: 10px;
       }
       main.flex-1 {
-        padding-top: 0.35rem;
-        padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
-        gap: 0.4rem;
+        padding-top: 0.25rem;
+        padding-bottom: calc(0.2rem + env(safe-area-inset-bottom, 0px));
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        gap: 0.25rem;
       }
       #viewGame {
-        gap: 0.45rem;
+        gap: 0.3rem;
+      }
+
+      /* 画布舞台去掉多余内边距，尽量贴近屏幕左右边缘 */
+      #viewGame .canvas-stage-card {
+        padding: 0.25rem;
       }
 
       /* 压缩课程任务卡，为操作区让出首屏高度 */
-      .coach-task-card {
-        padding: 0.45rem;
+      #viewGame .coach-task-card {
+        padding: 0.3rem;
       }
       .coach-task-card #currentCoachAvatar {
         width: 2.25rem;
         height: 2.25rem;
       }
       .coach-task-card > div:nth-child(2) {
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.3rem;
       }
       #questionBox {
-        padding: 0.4rem 0.6rem;
-        margin-bottom: 0.4rem;
+        padding: 0.3rem 0.5rem;
+        margin-bottom: 0.3rem;
       }
       /* 思政标签文字过长，移动端收起，可在课程图谱页查看 */
       #currentIdeologyBadge {
@@ -133,9 +140,10 @@
       /* ABCD 选项改为双列，压缩纵向高度 */
       #mainOptionsGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.25rem;
       }
       #mainOptionsGrid > button {
-        padding: 0.35rem 0.45rem;
+        padding: 0.3rem 0.35rem;
       }
       #mainOptionsGrid > button > div > span:last-child {
         display: -webkit-box;
@@ -143,11 +151,8 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
-      /* 触屏手势长文案收起，保留“点ABCD直接发射”开关 */
+      /* 触屏手势长文案收起，直接发射开关已移入炮膛预览条 */
       #viewGame .gesture-hint {
-        justify-content: flex-end;
-      }
-      #viewGame .gesture-hint > span {
         display: none;
       }
 
@@ -163,9 +168,9 @@
         padding-top: 0.3rem;
         padding-bottom: 0.3rem;
       }
-      .thumb-btn {
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+      #viewGame .thumb-btn {
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
       }
     }
   </style>
@@ -319,7 +324,7 @@
       </div>
 
       <!-- ==================== 核心：AIGC提案靶场画布 + 单手拇指操控舱 ==================== -->
-      <div class="glass-card border border-slate-800/90 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center">
+      <div class="canvas-stage-card glass-card border border-slate-800/90 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center">
 
         <!-- 泡泡龙画布容器 -->
         <div id="canvasContainer" class="w-full max-w-[460px] relative rounded-2xl overflow-hidden bg-slate-950 border border-sky-500/25 shadow-inner" style="aspect-ratio: 440 / 350;">
@@ -363,9 +368,10 @@
                 </div>
               </div>
             </div>
-            <span class="px-2 py-0.5 rounded-md bg-sky-500/15 border border-sky-400/30 text-[10px] text-sky-300 shrink-0 font-bold">
-              单手操控舱 👇
-            </span>
+            <label class="flex items-center gap-1 cursor-pointer text-sky-300 font-bold shrink-0 text-[10px]">
+              <input id="directFireToggle" type="checkbox" class="accent-sky-500 rounded" />
+              <span>点ABCD直接发射</span>
+            </label>
           </div>
 
           <!-- 第一排单手主控：左顺次换弹 / 中间 A B C D 拇指直选 / 右大号一键发射 -->
@@ -403,13 +409,9 @@
             </button>
           </div>
 
-          <!-- 单手手势说明与模式开关 -->
+          <!-- 单手手势说明 -->
           <div class="gesture-hint flex items-center justify-between px-1 text-[10px] sm:text-[11px] text-slate-400">
             <span>💡 <strong>单手手势：</strong>炮台左右滑切弹 · 向上拖瞄准<strong class="text-sky-300">松手即射</strong></span>
-            <label class="flex items-center gap-1 cursor-pointer text-sky-300 font-bold shrink-0">
-              <input id="directFireToggle" type="checkbox" class="accent-sky-500 rounded" />
-              <span>点ABCD直接发射</span>
-            </label>
           </div>
         </div>
       </div>
@@ -1725,7 +1727,8 @@
       const deckH = deck ? deck.getBoundingClientRect().height : 0;
       const top = wrap.getBoundingClientRect().top;
       const availH = window.innerHeight - top - deckH - 22;
-      const maxW = stageCard.clientWidth - 16;
+      const stageStyle = getComputedStyle(stageCard);
+      const maxW = stageCard.clientWidth - parseFloat(stageStyle.paddingLeft) - parseFloat(stageStyle.paddingRight);
       if (availH < 150) return;
       wrap.style.width = Math.min(maxW, Math.floor(availH * (440 / 350))) + 'px';
     }
