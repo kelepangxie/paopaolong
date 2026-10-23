@@ -78,6 +78,11 @@
       --ui-stroke: rgba(148, 163, 184, 0.16);
       --ui-stroke-strong: rgba(148, 163, 184, 0.32);
     }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
     main .glass-card {
       border-color: var(--ui-stroke);
       box-shadow: 0 16px 36px -24px rgba(2, 6, 23, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.055);
@@ -529,7 +534,7 @@
           <div class="absolute top-2 left-2.5 right-2.5 flex items-center justify-between gap-1.5 pointer-events-none text-[10px] sm:text-[11px]">
             <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-500/25 text-sky-200 shadow min-w-0">
               <span class="whitespace-nowrap shrink-0">🎨 背景</span>
-              <strong id="canvasCaseLabel" class="text-amber-300 font-bold truncate max-w-[104px] sm:max-w-[200px]">《美丽南方研学》AI生图案例</strong>
+              <strong id="canvasCaseLabel" class="text-amber-300 font-bold truncate max-w-[132px] sm:max-w-[200px]">《美丽南方研学》AI生图案例</strong>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               <span class="whitespace-nowrap px-2 py-0.5 rounded-full bg-slate-900/90 border border-slate-700/70 text-slate-300">
