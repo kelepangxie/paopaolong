@@ -648,7 +648,10 @@
             <h2 class="text-sm sm:text-base font-extrabold text-white mt-1">《模拟真实广告公司全流程》6课时 · 12知识点 · 6思政案例</h2>
             <p class="text-[11px] text-slate-400">点击下方任意课时工位，可直接进入对应AI教练的泡泡龙实训关卡</p>
           </div>
-          <div class="flex items-center gap-1.5 shrink-0">
+          <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            <button id="courseQrBtn" class="px-3 py-1.5 rounded-xl bg-sky-500/15 border border-sky-400/40 text-sky-300 text-xs font-extrabold transition hover:bg-sky-500/25">
+              📱 课堂码
+            </button>
             <button id="courseLeaderboardBtn" class="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-extrabold transition hover:bg-amber-500/30">
               🏅 成绩榜
             </button>
@@ -822,6 +825,23 @@
           <button id="confirmClearBtn" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">确认清空</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 课堂二维码弹窗 -->
+  <div id="qrModal" class="fixed inset-0 z-[60] hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="w-full max-w-xs bg-slate-900 rounded-3xl p-4 border border-sky-400/35 shadow-2xl text-center">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-extrabold text-white">扫码进入课堂实训</h3>
+        <button id="closeQrBtn" aria-label="关闭二维码" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+      <div class="bg-white rounded-2xl p-3 inline-block">
+        <img id="qrImage" src="assets/qr_paopaolong.png" alt="课堂实训二维码" class="w-56 h-56 block" />
+      </div>
+      <p class="text-[11px] text-slate-300 mt-2 break-all">https://kelepangxie.github.io/paopaolong/</p>
+      <p class="text-[10px] text-slate-400 mt-1">学生用微信或浏览器扫码即可开始</p>
     </div>
   </div>
 
@@ -2883,6 +2903,12 @@
         }
       });
       document.getElementById('courseLeaderboardBtn').addEventListener('click', () => showLeaderboard());
+      document.getElementById('courseQrBtn').addEventListener('click', () => {
+        document.getElementById('qrModal').classList.remove('hidden');
+      });
+      document.getElementById('closeQrBtn').addEventListener('click', () => {
+        document.getElementById('qrModal').classList.add('hidden');
+      });
       document.getElementById('saveScoreBtn').addEventListener('click', saveRoundScore);
       document.getElementById('closeLeaderboardBtn').addEventListener('click', closeLeaderboard);
       document.getElementById('leaderboardCloseFooterBtn').addEventListener('click', closeLeaderboard);
