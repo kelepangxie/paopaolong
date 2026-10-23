@@ -1557,6 +1557,8 @@
     let projectile = null;
     let particles = [];
     let floatingTexts = [];
+    let shockwaves = [];
+    let hitFlash = { alpha: 0, color: '#34d399' };
     let cannonAngle = -Math.PI / 2;
     let aimedBubble = null;
     let animTick = 0;
@@ -1566,6 +1568,8 @@
       bubbles = [];
       particles = [];
       floatingTexts = [];
+      shockwaves = [];
+      hitFlash.alpha = 0;
       projectile = null;
       let idCounter = 1;
 
@@ -1704,6 +1708,13 @@
       };
 
       sfx.playShoot();
+      // 炮口发射气浪
+      spawnShockwave(SHOOTER_X, SHOOTER_Y, OPTION_STYLES[optIdx].main, 0.45);
+    }
+
+    function spawnShockwave(x, y, color, scale = 1) {
+      shockwaves.push({ x, y, r: 10 * scale, maxR: 96 * scale, alpha: 1, color, width: Math.max(2, 4 * scale) });
+      shockwaves.push({ x, y, r: 4 * scale, maxR: 62 * scale, alpha: 0.9, color: '#ffffff', width: 2 });
     }
 
     function spawnExplosion(x, y, color, count = 20) {
@@ -1764,6 +1775,9 @@
         });
 
         addPopupText(hitX, hitY, `✅ +${delta}`, '#34d399');
+        spawnExplosion(hitX, hitY, '#34d399', 16);
+        spawnShockwave(hitX, hitY, '#34d399');
+        hitFlash = { alpha: 1, color: '#34d399' };
       } else {
         sfx.playWrongBounce();
         state.streak = 0;
@@ -1772,12 +1786,19 @@
         state.roundScore = Math.max(0, state.roundScore - 30);
         delta = -30;
         spawnExplosion(hitX, hitY, '#f43f5e', 12);
+        spawnShockwave(hitX, hitY, '#f43f5e');
+        hitFlash = { alpha: 1, color: '#f43f5e' };
         addPopupText(hitX, hitY, `❌ ${delta}`, '#fb7185');
       }
 
       renderQuestionAndOptionsUI();
       updateScoreAndStatsUI();
-      showAnswerResultModal(isCorrect, delta, q, mod);
+
+      // 先播完炮弹爆炸与冲击波，再弹出结果窗，保证打击感
+      setTimeout(() => {
+        if (!state.answerLocked || state.lastShotOptIdx !== shotOpt) return;
+        showAnswerResultModal(isCorrect, delta, q, mod);
+      }, isCorrect ? 800 : 680);
     }
 
     function updateGameLoop() {
@@ -1799,6 +1820,17 @@
         p.alpha -= 0.035;
         if (p.alpha <= 0) particles.splice(i, 1);
       }
+
+      // 冲击波环扩散
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const s = shockwaves[i];
+        s.r += 2.2 + (s.maxR - s.r) * 0.05;
+        s.alpha -= 0.022;
+        if (s.alpha <= 0 || s.r >= s.maxR) shockwaves.splice(i, 1);
+      }
+
+      // 命中闪光淡出
+      if (hitFlash.alpha > 0) hitFlash.alpha = Math.max(0, hitFlash.alpha - 0.055);
 
       for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const ft = floatingTexts[i];
@@ -1973,7 +2005,7 @@
         drawOptionBubble(projectile.x, projectile.y, R + 1, projectile.optIdx, true);
       }
 
-      // 7. 粒子与飘字
+      // 7. 粒子、冲击波与飘字
       particles.forEach(p => {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.alpha);
@@ -1983,6 +2015,27 @@
         ctx.fill();
         ctx.restore();
       });
+
+      shockwaves.forEach(s => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.alpha * 0.9);
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = s.width;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // 命中瞬间的画布边缘闪光
+      if (hitFlash.alpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = hitFlash.alpha * 0.5;
+        ctx.strokeStyle = hitFlash.color;
+        ctx.lineWidth = 7;
+        ctx.strokeRect(4, 4, CW - 8, CH - 8);
+        ctx.restore();
+      }
 
       floatingTexts.forEach(ft => {
         ctx.save();
@@ -2653,6 +2706,8 @@
       }
 
       canvas.addEventListener('pointerdown', e => {
+        // 判分特效播放期间锁定画布操作，避免误触换弹
+        if (state.answerLocked) return;
         const pt = getCanvasCoords(e);
         const inLauncherZone = pt.y >= SHOOTER_Y - 42;
 
@@ -2772,6 +2827,7 @@
       });
 
       document.getElementById('cycleAmmoBtn').addEventListener('click', () => {
+        if (state.answerLocked) return;
         cycleNextAmmo();
       });
 
@@ -2782,6 +2838,7 @@
       [0, 1, 2, 3].forEach(idx => {
         const btn = document.getElementById(['quickShootA', 'quickShootB', 'quickShootC', 'quickShootD'][idx]);
         btn.addEventListener('click', () => {
+          if (state.answerLocked) return;
           if (state.directFireOnOptTap || state.loadedOptIdx === idx) {
             shootAnswerOption(idx);
           } else {
