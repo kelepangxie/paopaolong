@@ -72,6 +72,99 @@
     .animate-pulse-subtle {
       animation: pulse-Subtle 2.4s infinite ease-in-out;
     }
+
+    /* ==================== 移动端竖屏布局优化 ==================== */
+    @media (max-width: 640px) {
+      /* 顶部导航取消吸顶并压缩高度，滚动时不再遮挡画布与操控舱 */
+      body > header.sticky {
+        position: static;
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+      }
+      /* 题干切换按钮只保留箭头，避免战绩条换行挤占高度 */
+      .btn-label {
+        display: none;
+      }
+      main > div:first-child > div:first-child {
+        gap: 0.15rem;
+      }
+      #questionProgressText {
+        padding-left: 0;
+        padding-right: 0.25rem;
+      }
+      /* 战绩胶囊收紧内边距，保证与题号、切换箭头同排显示 */
+      main > div:first-child > div:first-child > div:first-child > div {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+        font-size: 10px;
+      }
+      main.flex-1 {
+        padding-top: 0.35rem;
+        padding-bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
+        gap: 0.4rem;
+      }
+      #viewGame {
+        gap: 0.45rem;
+      }
+
+      /* 压缩课程任务卡，为操作区让出首屏高度 */
+      .coach-task-card {
+        padding: 0.45rem;
+      }
+      .coach-task-card #currentCoachAvatar {
+        width: 2.25rem;
+        height: 2.25rem;
+      }
+      .coach-task-card > div:nth-child(2) {
+        margin-bottom: 0.4rem;
+      }
+      #questionBox {
+        padding: 0.4rem 0.6rem;
+        margin-bottom: 0.4rem;
+      }
+      /* 思政标签文字过长，移动端收起，可在课程图谱页查看 */
+      #currentIdeologyBadge {
+        display: none;
+      }
+      #mainQuestionTitle {
+        font-size: 0.75rem;
+        line-height: 1.3;
+      }
+      /* ABCD 选项改为双列，压缩纵向高度 */
+      #mainOptionsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      #mainOptionsGrid > button {
+        padding: 0.35rem 0.45rem;
+      }
+      #mainOptionsGrid > button > div > span:last-child {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      /* 触屏手势提示收起，交互说明由拇指操控舱按钮自身承担 */
+      #viewGame .gesture-hint {
+        display: none;
+      }
+
+      /* 画布尺寸由脚本按剩余视口高度计算，确保与操控舱同屏 */
+      #canvasContainer {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* 单手操控舱紧凑化，保证发射键落在拇指可达区 */
+      #thumbLoadedPreviewBar {
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+      }
+      .thumb-btn {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -136,10 +229,10 @@
         <div class="flex items-center gap-1">
           <span id="questionProgressText" class="font-bold text-sky-300 px-1">第 1/24 题</span>
           <button id="prevQuestionBtn" class="px-1.5 py-0.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[10px] font-semibold transition">
-            ◀ 上一题
+            ◀ <span class="btn-label">上一题</span>
           </button>
           <button id="nextQuestionBtn" class="px-1.5 py-0.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-sky-300 border border-sky-500/30 text-[10px] font-semibold transition">
-            换一题 ▶
+            <span class="btn-label">换一题</span> ▶
           </button>
         </div>
       </div>
@@ -154,7 +247,7 @@
     <section id="viewGame" class="flex flex-col gap-2">
 
       <!-- 课程AI教练带教任务卡 + 题目与ABCD选项 -->
-      <div class="glass-card border border-sky-500/30 rounded-2xl p-2.5 sm:p-3 relative overflow-hidden">
+      <div class="coach-task-card glass-card border border-sky-500/30 rounded-2xl p-2.5 sm:p-3 relative overflow-hidden">
         <!-- 顶部装饰光带 -->
         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-blue-500 to-rose-500"></div>
 
@@ -198,7 +291,7 @@
         </div>
 
         <!-- 题目题干 -->
-        <div class="bg-slate-950/75 border border-slate-800/90 rounded-xl px-3 py-2 mb-2">
+        <div id="questionBox" class="bg-slate-950/75 border border-slate-800/90 rounded-xl px-3 py-2 mb-2">
           <h2 id="mainQuestionTitle" class="text-xs sm:text-sm font-extrabold text-white leading-snug">
             题目加载中...
           </h2>
@@ -308,7 +401,7 @@
           </div>
 
           <!-- 单手手势说明与模式开关 -->
-          <div class="flex items-center justify-between px-1 text-[10px] sm:text-[11px] text-slate-400">
+          <div class="gesture-hint flex items-center justify-between px-1 text-[10px] sm:text-[11px] text-slate-400">
             <span>💡 <strong>单手手势：</strong>炮台左右滑切弹 · 向上拖瞄准<strong class="text-sky-300">松手即射</strong></span>
             <label class="flex items-center gap-1 cursor-pointer text-sky-300 font-bold shrink-0">
               <input id="directFireToggle" type="checkbox" class="accent-sky-500 rounded" />
@@ -1616,8 +1709,27 @@
       });
     }
 
+    // 移动端：按剩余视口高度自适应画布宽度，保证画布与拇指操控舱同屏可见
+    function fitMobileCanvas() {
+      const wrap = document.getElementById('canvasContainer');
+      if (!wrap) return;
+      wrap.style.width = '';
+      // 桌面端维持原有 460px 版式
+      if (window.innerWidth > 640) return;
+
+      const stageCard = wrap.parentElement;
+      const deck = stageCard.lastElementChild;
+      const deckH = deck ? deck.getBoundingClientRect().height : 0;
+      const top = wrap.getBoundingClientRect().top;
+      const availH = window.innerHeight - top - deckH - 22;
+      const maxW = stageCard.clientWidth - 16;
+      if (availH < 150) return;
+      wrap.style.width = Math.min(maxW, Math.floor(availH * (440 / 350))) + 'px';
+    }
+
     function resizeCanvas() {
       if (!canvas) return;
+      fitMobileCanvas();
       const dpr = window.devicePixelRatio || 1;
       canvas.width = CW * dpr;
       canvas.height = CH * dpr;
@@ -1830,6 +1942,9 @@
       }
 
       syncThumbAndOptionsUI();
+
+      // 题干与选项长度会改变任务卡高度，无反馈面板时重新适配画布
+      if (state.lastShotOptIdx === null) fitMobileCanvas();
     }
 
     function updateScoreAndStatsUI() {
@@ -2061,6 +2176,11 @@
       renderQuestionAndOptionsUI();
 
       window.addEventListener('resize', resizeCanvas);
+      // Tailwind CDN 与字体异步生效，样式稳定后再校准一次画布尺寸
+      setTimeout(fitMobileCanvas, 300);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(fitMobileCanvas);
+      }
 
       canvas.addEventListener('pointerdown', e => {
         const pt = getCanvasCoords(e);
