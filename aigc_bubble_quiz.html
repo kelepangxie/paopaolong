@@ -778,8 +778,8 @@
           <div id="roundFinalAcc" class="text-base font-extrabold text-emerald-400">100%</div>
         </div>
         <div>
-          <div class="text-[10px] text-slate-400">历史最佳</div>
-          <div id="roundFinalBest" class="text-base font-extrabold text-sky-400">0</div>
+          <div class="text-[10px] text-slate-400">得分率</div>
+          <div id="roundFinalRate" class="text-base font-extrabold text-sky-400">0%</div>
         </div>
       </div>
       <div class="flex items-center gap-2 mb-2">
@@ -1781,7 +1781,8 @@
         state.totalCorrect++;
         state.roundCorrect++;
         state.streak++;
-        delta = 100 + state.streak * 20;
+        // 连击加成封顶 3 连（最高 +60），避免后段分数暴涨导致分值失真
+        delta = 100 + Math.min(state.streak, 3) * 20;
         state.score += delta;
         state.roundScore += delta;
 
@@ -1801,10 +1802,10 @@
       } else {
         sfx.playWrongBounce();
         state.streak = 0;
-        // 答错扣 30 分，总分与本轮分最低为 0，避免反复试错刷分
-        state.score = Math.max(0, state.score - 30);
-        state.roundScore = Math.max(0, state.roundScore - 30);
-        delta = -30;
+        // 答错扣 50 分，总分与本轮分最低为 0，避免反复试错刷分
+        state.score = Math.max(0, state.score - 50);
+        state.roundScore = Math.max(0, state.roundScore - 50);
+        delta = -50;
         spawnExplosion(hitX, hitY, '#f43f5e', 12);
         spawnShockwave(hitX, hitY, '#f43f5e');
         hitFlash = { alpha: 1, color: '#f43f5e' };
@@ -2379,27 +2380,50 @@
       }
     }
 
+    // 本轮满分：从第 1 题连对到第 n 题的逐题得分之和（连击加成封顶 3 连）
+    function getMaxRoundScore(n) {
+      let max = 0;
+      for (let k = 1; k <= n; k++) max += 100 + Math.min(k, 3) * 20;
+      return max;
+    }
+
+    // 当前作答范围标签，保证结算与排行榜口径一致、可比较
+    function getRoundRangeLabel() {
+      const n = getFilteredQuestions().length;
+      if (state.selectedModule === 0) return `全部课时·${n}题`;
+      return `${getModuleById(state.selectedModule).shortName}·${n}题`;
+    }
+
+    function getBestScoreKey() {
+      return state.selectedModule === 0 ? 'all' : 'm' + state.selectedModule;
+    }
+
     function showRoundResultModal() {
       const modal = document.getElementById('roundResultModal');
       const total = getFilteredQuestions().length;
+      const maxScore = getMaxRoundScore(total);
+      const rate = maxScore > 0 ? Math.round((state.roundScore / maxScore) * 100) : 0;
       const acc = state.roundAnswered === 0
         ? '0%'
         : `${Math.round((state.roundCorrect / state.roundAnswered) * 100)}%`;
       let best = 0;
       try {
-        best = Number(localStorage.getItem('aigc_bubble_best_score') || 0) || 0;
+        const bestMap = JSON.parse(localStorage.getItem('aigc_bubble_best_score_v2') || '{}') || {};
+        const bestKey = getBestScoreKey();
+        best = Number(bestMap[bestKey] || 0) || 0;
         if (state.roundScore > best) {
           best = state.roundScore;
-          localStorage.setItem('aigc_bubble_best_score', String(best));
+          bestMap[bestKey] = best;
+          localStorage.setItem('aigc_bubble_best_score_v2', JSON.stringify(bestMap));
         }
       } catch (e) {
         best = Math.max(best, state.roundScore);
       }
       document.getElementById('roundResultTitle').textContent = '本轮实训全部完成！';
-      document.getElementById('roundResultDesc').textContent = `已完成 ${state.roundAnswered}/${total} 题，答对 ${state.roundCorrect} 题`;
+      document.getElementById('roundResultDesc').textContent = `已完成 ${state.roundAnswered}/${total} 题，答对 ${state.roundCorrect} 题 · 本范围历史最佳 ${best}`;
       document.getElementById('roundFinalScore').textContent = state.roundScore;
       document.getElementById('roundFinalAcc').textContent = acc;
-      document.getElementById('roundFinalBest').textContent = best;
+      document.getElementById('roundFinalRate').textContent = `${rate}%`;
       document.getElementById('leaderboardNameInput').value = '';
       modal.classList.remove('hidden');
     }
@@ -2463,7 +2487,8 @@
             <span class="w-6 text-center text-xs font-black ${i < 3 ? 'text-amber-300' : 'text-slate-500'}">${i < 3 ? medal[i] : i + 1}</span>
             <div class="min-w-0 flex-1">
               <div class="text-[11px] font-extrabold text-white truncate">${escapeHtml(it.name)}</div>
-              <div class="text-[9px] text-slate-400">命中 ${it.correct}/${it.answered} · ${it.accuracy}% · ${escapeHtml(it.timeText || '')}</div>
+              <div class="text-[9px] text-slate-400 truncate">${escapeHtml(it.range || '全部课时')} · 命中 ${it.correct}/${it.answered} · ${it.accuracy}%</div>
+              <div class="text-[9px] text-slate-500 truncate">${escapeHtml(it.timeText || '')}</div>
             </div>
             <span class="text-sm font-black text-amber-300 shrink-0">${it.score}</span>
           </div>`;
@@ -2489,6 +2514,7 @@
       const entry = {
         id: Date.now(),
         name,
+        range: getRoundRangeLabel(),
         score: state.roundScore,
         correct: state.roundCorrect,
         answered: state.roundAnswered,
