@@ -143,8 +143,11 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
-      /* 触屏手势提示收起，交互说明由拇指操控舱按钮自身承担 */
+      /* 触屏手势长文案收起，保留“点ABCD直接发射”开关 */
       #viewGame .gesture-hint {
+        justify-content: flex-end;
+      }
+      #viewGame .gesture-hint > span {
         display: none;
       }
 
