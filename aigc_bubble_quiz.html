@@ -2013,8 +2013,10 @@
       ctx.stroke();
       ctx.restore();
 
+      // 炮台内已装填的炮弹常驻显示，发射过程中也不再消失，避免发射台视觉突然变小
+      drawOptionBubble(SHOOTER_X, SHOOTER_Y, R + 3.5, state.loadedOptIdx, true);
+
       if (!projectile) {
-        drawOptionBubble(SHOOTER_X, SHOOTER_Y, R + 3.5, state.loadedOptIdx, true);
         ctx.save();
         ctx.fillStyle = '#cbd5e1';
         ctx.font = 'bold 10px Inter, "PingFang SC", sans-serif';
@@ -2071,6 +2073,20 @@
     }
 
     // 移动端：按剩余视口高度自适应画布宽度，保证画布与拇指操控舱同屏可见
+    let stableViewportH = 0; // 用 100lvh 取稳定高度，避免地址栏收起/展开导致画布跳变
+    let lastViewportW = 0;
+
+    function getStableViewportHeight() {
+      if (stableViewportH) return stableViewportH;
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:100lvh;pointer-events:none;';
+      document.body.appendChild(probe);
+      const measured = probe.getBoundingClientRect().height;
+      probe.remove();
+      stableViewportH = measured > 0 ? measured : window.innerHeight;
+      return stableViewportH;
+    }
+
     function fitMobileCanvas() {
       const wrap = document.getElementById('canvasContainer');
       if (!wrap) return;
@@ -2082,7 +2098,7 @@
       const deck = stageCard.lastElementChild;
       const deckH = deck ? deck.getBoundingClientRect().height : 0;
       const top = wrap.getBoundingClientRect().top;
-      const availH = window.innerHeight - top - deckH - 22;
+      const availH = getStableViewportHeight() - top - deckH - 22;
       const stageStyle = getComputedStyle(stageCard);
       const maxW = stageCard.clientWidth - parseFloat(stageStyle.paddingLeft) - parseFloat(stageStyle.paddingRight);
       if (availH < 150) return;
@@ -2091,6 +2107,11 @@
 
     function resizeCanvas() {
       if (!canvas) return;
+      // 宽度变化（横竖屏切换）时才重新取样视口高度，单纯地址栏收起不触发跳变
+      if (window.innerWidth !== lastViewportW) {
+        lastViewportW = window.innerWidth;
+        stableViewportH = 0;
+      }
       fitMobileCanvas();
       const dpr = window.devicePixelRatio || 1;
       canvas.width = CW * dpr;
